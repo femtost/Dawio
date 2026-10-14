@@ -1,6 +1,6 @@
-# DartX
+# Dawex
 
-Dart Crossplatform with WebView. 
+Dart + Web crossplatform
 
 
 # Purpose
