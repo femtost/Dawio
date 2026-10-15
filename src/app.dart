@@ -79,7 +79,7 @@ var ____CORE____;
 
 // Main
 void main(){
-    print("DartX starting...");
+    print("Dawio starting...");
     print("Platform name: ${getPlatformName()}");
     var app = new App();
     app.start();
