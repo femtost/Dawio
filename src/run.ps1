@@ -40,6 +40,10 @@ foreach ($file in $files) {
 
     # Copy
     Copy-Item -Path $absPath -Destination $newPath -Force
+    # File is now outside of platforms/modules-x
+    $content = get-content $newPath -raw 
+    $newContent = $content -replace "../../modules/",""
+    set-content -path $newPath -value $newContent
 }
 
 # First frontend build
@@ -94,7 +98,8 @@ $job = Start-Job -argumentList $variation,$platform -ScriptBlock {
                 add-content -path "watcher.log" -value "Copy to: $targetFile"
 
                 clear-content $targetFile
-                add-content -path $targetFile -value $content
+                $newContent = $content -replace "../../modules/",""
+                add-content -path $targetFile -value $newContentt
             }
         }        
         # Rebuild frontend
@@ -148,9 +153,9 @@ try {
     }
     # For hot reload:
     # To disable: this line and HotReloader in app-?.dart
-    dart run --enable-vm-service $app    
+    # dart run --enable-vm-service $app    
     # No hot reload:
-    # dart $app    
+    dart $app    
 }finally {
     Write-Host "Stopping watcher..."
     Stop-Job $job -ErrorAction SilentlyContinue

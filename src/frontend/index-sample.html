@@ -15,12 +15,28 @@
     </body>
     <script>
         var log = console.log;
+        // Uncaught synchronous exceptions
+        window.addEventListener('error', (event) => {
+            console.error('Uncaught exception:', event.error);
+            alert("Error: "+event.error);
+        });
+        // Unhandled Promise rejections
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled Promise rejection:', event.reason);
+            alert("Rejection: "+event.reason);
+        });
+
         window.addEventListener("load",async()=>{
             var body = document.querySelector("body");
 
             // Fast sync call
             var res = await call("echo",["abc",123]);
             body.innerHTML = "<div>"+JSON.stringify(res)+"<div>";
+
+            setTimeout(async()=>{
+                var res = await call("echo",["abcffffffffff",123]);
+                body.innerHTML = "<div>"+JSON.stringify(res)+"<div>";
+            },2000);
 
             // var res = await proc("sum",[1,999999999]);
             // alert(res);

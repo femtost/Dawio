@@ -7,7 +7,7 @@ import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
 // Modules
-import "utils.dart";
+import "../../modules/utils.dart";
 
 var ____FFI____;
 
@@ -96,7 +96,7 @@ class WebView_ {
         webviewNavigate(webviewInstance, urlStringPointer.cast<Char>());
 
         // 3. Free the string memory allocated on the heap during the dispatch call setup
-        calloc.free(urlStringPointer);
+        calloc.free(urlStringPointer); /// HAS THE WEBVIEW GOT IT? TO FREE
         dylib.close();
     }
 
@@ -127,7 +127,7 @@ class WebView_ {
         webviewReturn(_thisclass.webview, id.cast<Char>(), 0, resultPtr.cast<Char>());
         print("Call returned");
 
-        calloc.free(resultPtr);        
+        calloc.free(resultPtr); /// HAS THE WEBVIEW GOT IT? TO FREE
         dylib.close();
     }
 
@@ -171,7 +171,7 @@ class WebView_ {
         webviewReturn(_thisclass.webview, id.cast<Char>(), 0, resultPtr.cast<Char>());
         print("Proc returned");
 
-        calloc.free(resultPtr);        
+        calloc.free(resultPtr); /// HAS THE WEBVIEW GOT IT? TO FREE        
         dylib.close();
     }
 
