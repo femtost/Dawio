@@ -1,5 +1,9 @@
 # Platform files when build
 *_.dart
+watcher.log
+src/frontend/bundle.js 
+src/frontend/bundle.html 
+src/frontend/bundle.css
 
 # Node.js modules
 node_modules

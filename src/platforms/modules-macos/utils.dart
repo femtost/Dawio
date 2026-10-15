@@ -1,3 +1,6 @@
+// Libs
+import "dart:io";
+
 var ____FUNCS____;
 
 // Platform
@@ -8,6 +11,11 @@ bool platformIsWeb(){
 // Platform name
 String getPlatformName(){
     return "macos";
+}
+
+// Exit
+void processExit(){
+    exit(0);
 }
 
 var ____CLASS____;

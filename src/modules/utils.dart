@@ -1,5 +1,6 @@
 // Libs
 import "dart:async";
+import "dart:convert";
 
 // Platform-specific:
 export '../stub.dart' // Non-web
@@ -33,6 +34,26 @@ Timer setInterval(callback,ms){
         // Stop timer: timer.cancel()
         callback(timer);
     });
+}
+
+// To json
+String? toJson(obj){
+    try{
+        var json = jsonEncode(obj);
+        return json;
+    }catch(_){
+        return null;
+    }
+}
+
+// From json
+dynamic fromJson(json){
+    try{
+        var obj = jsonDecode(json);
+        return obj;
+    }catch(_){
+        return null;
+    }
 }
 
 var ____CLASS____;

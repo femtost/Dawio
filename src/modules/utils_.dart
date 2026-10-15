@@ -1,4 +1,5 @@
 // Libs
+import "dart:io";
 import "dart:convert";
 
 var ____FUNCS____;
@@ -11,31 +12,17 @@ bool platformIsWeb(){
 // Platform name
 String getPlatformName(){
     return "windows";
-}
+} 
 
-// To json
-String toJson(obj){
-    try{
-        var json = jsonEncode(obj);
-        return json;
-    }catch(_){
-        return "{}";
-    }
-}
-
-// From json
-dynamic fromJson(json){
-    try{
-        var obj = jsonDecode(json);
-        return obj;
-    }catch(_){
-        return {};
-    }
+// Exit
+void processExit(){
+    exit(0);
 }
 
 var ____CLASS____;
 
 // Utils for Windows
+// Only Windows-specific functionalities here
 class Utils_ {
     //
 }

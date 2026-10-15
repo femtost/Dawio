@@ -30,7 +30,7 @@ Update
   - Git pull from this original repo.  
 
 Run command:
-  - cd src && run.ps1 PLATFORM-NAME
+  - cd src && run.ps1 FILE.dart PLATFORM-NAME
 
 
 # Dependencies

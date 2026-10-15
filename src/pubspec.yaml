@@ -6,4 +6,5 @@ environment:
 
 dependencies:
     ffi: ^2.2.0
+    hotreloader: ^4.4.0
     win32: ^6.4.0

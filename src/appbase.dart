@@ -5,9 +5,9 @@ import "libs.dart";
 var ____CLASS____;
 
 // App class
-class App {    
+class Appbase {    
     // Ctor
-    App();
+    Appbase();
 
     // Echo back the params
     dynamic echo(params){
@@ -70,17 +70,20 @@ class App {
         };
         Isolate.spawn((data){
             print("Spawning WebView thread...");
-            WebView_.create(funcs,html); // Don't await here, no use.       
+            WebView_.createAndRun(funcs,html); // Don't await here, no use.       
+
+            if (!platformIsWeb())
+                processExit();
         },data);
     }
 }
 
-var ____CORE____;
+// var ____CORE____;
 
-// Main
-void main(){
-    print("Dawio starting...");
-    print("Platform name: ${getPlatformName()}");
-    var app = new App();
-    app.start();
-}
+// // Main
+// void main(){
+//     print("Dawio starting...");
+//     print("Platform name: ${getPlatformName()}");
+//     var app = new App();
+//     app.start();
+// }

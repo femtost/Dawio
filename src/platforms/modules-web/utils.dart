@@ -10,6 +10,11 @@ String getPlatformName(){
     return "web";
 }
 
+// Exit
+void processExit(){
+    // Do nothing here
+}
+
 var ____CLASS____;
 
 // Utils for web

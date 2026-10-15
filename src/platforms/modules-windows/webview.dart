@@ -123,7 +123,7 @@ class WebView_ {
         print("Call returning...");
         String idStr = id.cast<Char>().cast<Utf8>().toDartString();
         final result = toJson(_thisclass.jsCallResults[idStr]);
-        final resultPtr = result.toNativeUtf8();
+        final resultPtr = result!.toNativeUtf8();
         webviewReturn(_thisclass.webview, id.cast<Char>(), 0, resultPtr.cast<Char>());
         print("Call returned");
 
@@ -167,7 +167,7 @@ class WebView_ {
         print("Proc returning...");
         String idStr = id.cast<Char>().cast<Utf8>().toDartString();
         final result = toJson(_thisclass.jsProcResults[idStr]);
-        final resultPtr = result.toNativeUtf8();
+        final resultPtr = result!.toNativeUtf8();
         webviewReturn(_thisclass.webview, id.cast<Char>(), 0, resultPtr.cast<Char>());
         print("Proc returned");
 
@@ -270,7 +270,7 @@ class WebView_ {
     // ********************************************
     // WARN: RUN ONCE ONLY, MEMLEAK NOT TESTED YET.
     // ********************************************
-    static Future<void> create(Map funcs,String html) async{
+    static Future<void> createAndRun(Map funcs,String html) async{
         _thisclass.funcs = funcs;
 
         // 1. Open the compiled webview.dll file
@@ -352,6 +352,7 @@ class WebView_ {
         // 6. Clean up memory once the user closes the window
         webviewDestroy(webview);
         dl.close();
+        print("Main window closed");
     } // create
 }
 typedef _thisclass = WebView_;
