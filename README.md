@@ -1,6 +1,6 @@
 # Dawex
 
-Dart + Web crossplatform
+Dart and Web Crossplatform
 
 
 # Purpose
