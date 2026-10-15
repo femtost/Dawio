@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "html-minifier": "^4.0.0"
+  }
+}

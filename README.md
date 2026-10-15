@@ -9,7 +9,8 @@ Dart + HTML/CSS, a crossplatform codebase.
 Dart is the **best-of-both-world** language for statictyped speed (similar to C/C++) 
 and dynamictyped flexibility (similar to JS).
 
-JS(minimal)/HTML/CSS is for fast and **flexible UI** development.
+JS(minimal)/HTML/CSS is for fast and **flexible UI** development. While JS
+is only vanilla JS and with minimal libs, it's for UI performance, UX.
 
 
 # Tech Stack
@@ -30,7 +31,9 @@ Update
   - Git pull from this original repo.  
 
 Run command:
-  - cd src && run.ps1 FILE.dart PLATFORM-NAME
+  - `cd src && run.ps1 VARIATION-NAME PLATFORM-NAME`
+  - Example: `run.ps1 sample windows`
+  - No variation, production: `run.ps1 main windows`
 
 
 # Dependencies

@@ -1,9 +1,20 @@
 # Platform files when build
 *_.dart
 watcher.log
+
 src/frontend/bundle.js 
+src/frontend/bundle.js.map
 src/frontend/bundle.html 
+src/frontend/bundle.html.map
 src/frontend/bundle.css
+src/frontend/bundle.css.map
+
+src/frontend/bundle.min.js 
+src/frontend/bundle.min.js.map
+src/frontend/bundle.min.html 
+src/frontend/bundle.min.html.map 
+src/frontend/bundle.min.css
+src/frontend/bundle.min.css.map
 
 # Node.js modules
 node_modules

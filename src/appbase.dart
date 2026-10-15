@@ -31,7 +31,7 @@ class Appbase {
         };
 
         // Load frontend
-        var html = await Fs.readFile("./frontend/bundle.html");        
+        var html = await Fs.readFile("./frontend/bundle.min.html");        
 
         // // Backend thread
         // var receiver = ReceivePort(); 
