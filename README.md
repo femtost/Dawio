@@ -1,6 +1,7 @@
-# Dawex
+# Dawio
 
-Dart and Web Crossplatform
+Dart And Web In One<br>
+Dart + HTML/CSS, a crossplatform codebase.
 
 
 # Purpose
