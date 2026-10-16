@@ -10,8 +10,7 @@ if ($args.count -lt 2){
 if (Test-Path -Path "./platforms/modules-$($args[1])" -PathType Container){
     echo "Using platform $($args[1])"
     echo "Copying platform files over to 'modules' dir..."
-}
-else{
+}else{
     echo "No such platform at 'platforms/modules-$($args[1])'"
 }
 $variation = $args[0]
@@ -153,9 +152,9 @@ try {
     }
     # For hot reload:
     # To disable: this line and HotReloader in app-?.dart
-    # dart run --enable-vm-service $app    
+    dart run --enable-vm-service $app    
     # No hot reload:
-    dart $app    
+    # dart $app    
 }finally {
     Write-Host "Stopping watcher..."
     Stop-Job $job -ErrorAction SilentlyContinue

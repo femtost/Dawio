@@ -33,14 +33,16 @@
             var res = await call("echo",["abc",123]);
             body.innerHTML = "<div>"+JSON.stringify(res)+"<div>";
 
+            // Test async call (sum func is async)
             setTimeout(async()=>{
-                var res = await call("echo",["abcffffffffff",123]);
-                body.innerHTML = "<div>"+JSON.stringify(res)+"<div>";
+                var res = await acall("sum",[1,999999999]);
+                body.innerHTML += `<div>${JSON.stringify(res)}</div>`;
             },2000);
 
-            // var res = await proc("sum",[1,999999999]);
-            // alert(res);
-            // body.innerHTML += `<div>${JSON.stringify(res)}</div>`;
+            setTimeout(()=>{
+                body.innerHTML += `got all?`;
+                alert(_backendPort);
+            },4000);
         });
     </script>
 </html>

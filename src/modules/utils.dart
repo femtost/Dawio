@@ -1,6 +1,7 @@
 // Libs
 import "dart:async";
 import "dart:convert";
+import "dart:math";
 
 // Platform-specific:
 export '../stub.dart' // Non-web
@@ -54,6 +55,19 @@ dynamic fromJson(json){
     }catch(_){
         return null;
     }
+}
+
+// Random
+double Math_random(){
+    final n = Random().nextDouble();
+    return n;
+}
+
+// Random str
+String randStr(){
+    var s1 = Math_random().toString().replaceAll(".","");
+    var s2 = Math_random().toString().replaceAll(".","");
+    return "$s1-$s2";
 }
 
 var ____CLASS____;

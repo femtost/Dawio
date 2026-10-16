@@ -8,16 +8,9 @@ class App extends Appbase {
 }  
 
 void main() async{
-    // Experimental: Disabled, breaks Dart-Webview communication, sometimes.
-    // Also 'Dart: Hot Reload' by Dart-Code breaks this communication, also sometimes.
-    // To disable: this line and the line enable-vm-service in run.ps1
-    // Somehow the issue is: Hot Reload mechanism vs WebView
-    // *********************************
-    // await HotReloader.create();
-
-    // 1s delay to ensure communication with webview in isolate(?)
-    await sleepMs(1000);
-    print("App is running... Modify code to hot reload!");
+    // Hot reload enabled via HotReloader and --enable-vm-service
+    await HotReloader.create();
+    print("App is running... modify code to hot reload!");
 
     // Start app
     print("Dawio starting...");

@@ -72,6 +72,6 @@ Legacy
 
 Class naming:
   - Use `ClassName` for pure Dart class
-  - Use `ClassName_` for platform-based class
+  - The `ClassName_` is copied out from platforms/modules-x
 
 ____

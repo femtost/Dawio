@@ -1,11 +1,14 @@
 // Libs
 import "dart:isolate";
 import "libs.dart";
+import "modules/constants.dart";
 
 var ____CLASS____;
 
 // App class
 class Appbase {    
+    int? webviewAddress;
+
     // Ctor
     Appbase();
 
@@ -18,20 +21,100 @@ class Appbase {
     // Sum numbers
     Future<dynamic> sum(params) async{
         print("Sum is called by JS");
+        await sleepMs(1000);
+        print("After sleep");
         return params;
     }
 
     var ___CORE____;
+    
+    // Make js code
+    String makeJsCode(port){
+        return """
+        var _acallProms = {};
+
+        function newLock(){
+            var unlock,lock=new Promise((res,rej)=>{ unlock=res; });
+            return [lock,unlock];
+        }
+        function toJson(v){
+            return JSON.stringify(v);
+        }
+        function fromJson(str){
+            try { return JSON.parse(str); }
+            catch { return null; }
+        }
+        async function acall(funcName,params){
+            var callId = Math.random().toString();            
+            var [lock,unlock]=newLock();
+            _acallProms[callId]={ unlock };
+
+            window._ws.send(toJson({
+                callId, func:funcName, params
+            }));
+            return await lock;
+        }
+
+        window._ws = new WebSocket('ws://localhost:$port/ws');
+        _ws.onopen = () => _ws.send(toJson({ msg:'Hello Dart!' }));
+
+        _ws.onmessage = ev =>{
+            var obj = fromJson(ev.data);
+
+            if (obj.callId){
+                let rsult = obj.result;
+                _acallProms[obj.callId](result);
+            }
+        };
+        """;
+    }
 
     // Start the app
     Future<void> start() async{
         // Functions for frontend
         var funcs = {
-            "echo":this.echo, "sum":this.sum
+            "echo":(this.echo,syn), "sum":(this.sum,asyn)
         };
 
         // Load frontend
-        var html = await Fs.readFile("./frontend/bundle.min.html");        
+        var html = await Fs.readFile("./frontend/bundle.min.html");   
+
+        // Port for frontend to ws to
+        if (!platformIsWeb()){
+            var backend;
+            backend = await HttpServer.bind('0.0.0.0', 0);
+            print("Local port: ${backend.port}");
+
+            backend.listen((request) async {
+                if (request.uri.path == '/ws') {
+                    final ws = await WebSocketTransformer.upgrade(request);
+
+                    ws.listen((message) async{                        
+                        print('Received: $message');
+                        // ws.add('Echo: $message');
+                        var obj = fromJson(message);
+
+                        if (obj["func"] != null){
+                            var funcName = obj["func"];
+                            var params = obj["params"];
+                            var callId = obj["callId"];
+                            var result = await funcs[funcName]!.$1(params);
+                            ws.add(toJson({
+                                "callId":callId, "result":result
+                            }));
+                        }
+                    });
+                    return;
+                }
+                // Normal HTTP requests
+                request.response
+                ..statusCode = HttpStatus.ok
+                ..write('HTTP backend is running');
+                await request.response.close();
+            });
+            html += "<script>window._backendPort = ${backend.port};</script>";     
+            html += "<script>${makeJsCode(backend.port)}</script>";
+        }        
 
         // // Backend thread
         // var receiver = ReceivePort(); 
@@ -61,8 +144,21 @@ class Appbase {
         //   - Inside the bound Dart func, can't call webview_return directly
         //   - Inside the found Dart func, do webview_dispatch
         var receiver = ReceivePort();
-        receiver.listen((data){
-            //
+        receiver.listen((data) async{
+            if (data["webviewAddress"] != null){
+                this.webviewAddress = data["webviewAddress"];
+            }else if (data["func"] != null){
+                var funcName = data["func"];
+                var params = data["params"];
+                var respondTo = data["respondTo"];
+                var result = await funcs[funcName]!.$1(params);
+
+                // NOTE: EVEN STATIC PROPS IN DIFFERENT ISOLATES DIFFER.
+                // Static method but calling from main thread is different 
+                // from inside the isolate spawn below, when the WebView_.createAndRun
+                // is called, it sends back the webview address to use.
+                WebView_.sendToJs(this.webviewAddress!, respondTo, result);
+            }
         });
 
         Map<String,dynamic> data = {
@@ -70,7 +166,8 @@ class Appbase {
         };
         Isolate.spawn((data){
             print("Spawning WebView thread...");
-            WebView_.createAndRun(funcs,html); // Don't await here, no use.       
+            var outer = data["outer"];
+            WebView_.createAndRun(outer!,funcs,html); // Don't await here, no use.       
 
             if (!platformIsWeb())
                 processExit();
