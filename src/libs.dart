@@ -1,9 +1,9 @@
 // Libs
 // Platform-specific:
-export 'stub.dart' // Non-web
+export 'stubs/dart-io.dart' // Non-web
     if (dart.library.io) 'dart:io';
 
-export 'stub.dart' // Web
+export 'stubs/dart-js-interop.dart' // Web
     if (dart.library.js_interop) 'dart:js_interop';
 
 // Crossplatform:

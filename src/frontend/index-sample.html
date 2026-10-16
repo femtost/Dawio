@@ -37,11 +37,23 @@
             setTimeout(async()=>{
                 var res = await acall("sum",[1,999999999]);
                 body.innerHTML += `<div>${JSON.stringify(res)}</div>`;
+            },1000);
+
+            // Test async call (with separate isolate)
+            setTimeout(async()=>{
+                var res = await pcall("staticSum",[1,999999999]);
+                body.innerHTML += `<div>${JSON.stringify(res)}</div>`;
             },2000);
 
+            // Test custom method
+            setTimeout(async()=>{
+                var res = await acall("test",[]);
+                body.innerHTML += `<div>${JSON.stringify(res)}</div>`;
+            },3000);
+
             setTimeout(()=>{
+                alert("Backend port: "+_backendPort);
                 body.innerHTML += `got all?`;
-                alert(_backendPort);
             },4000);
         });
     </script>

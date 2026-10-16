@@ -8,22 +8,36 @@ var ____CLASS____;
 // App class
 class Appbase {    
     int? webviewAddress;
+    Map funcs = {};
+    Map staticFuncs = {};
 
     // Ctor
     Appbase();
 
     // Echo back the params
     dynamic echo(params){
-        print("Echo is called by JS");
+        print("echo is called by JS");
         return params;
     }
 
     // Sum numbers
     Future<dynamic> sum(params) async{
-        print("Sum is called by JS");
-        await sleepMs(1000);
+        print("sum is called by JS");
+        await sleepMs(100);
         print("After sleep");
-        return params;
+        var s = .0;
+        for (var v in params) s+=v;
+        return s;
+    }
+
+    // Sum numbers
+    static Future<dynamic> staticSum(params) async{
+        print("staticSum is called by JS");
+        await sleepMs(100);
+        print("After sleep");
+        var s = .0;
+        for (var v in params) s+=v;
+        return s;
     }
 
     var ___CORE____;
@@ -32,6 +46,7 @@ class Appbase {
     String makeJsCode(port){
         return """
         var _acallProms = {};
+        var _pcallProms = {};
 
         function newLock(){
             var unlock,lock=new Promise((res,rej)=>{ unlock=res; });
@@ -47,36 +62,61 @@ class Appbase {
         async function acall(funcName,params){
             var callId = Math.random().toString();            
             var [lock,unlock]=newLock();
-            _acallProms[callId]={ unlock };
+            _acallProms[callId] = unlock;
 
             window._ws.send(toJson({
                 callId, func:funcName, params
             }));
             return await lock;
         }
+        async function pcall(funcName,params){
+            var callId = Math.random().toString();            
+            var [lock,unlock]=newLock();
+            _pcallProms[callId] = unlock;
 
+            window._ws.send(toJson({
+                callId, proc:funcName, params
+            }));
+            return await lock;
+        }
+
+        // ____CORE____
         window._ws = new WebSocket('ws://localhost:$port/ws');
         _ws.onopen = () => _ws.send(toJson({ msg:'Hello Dart!' }));
 
         _ws.onmessage = ev =>{
             var obj = fromJson(ev.data);
 
-            if (obj.callId){
-                let rsult = obj.result;
+            if (obj.type=="func-result"){
+                let result = obj.result;
                 _acallProms[obj.callId](result);
+
+            }else if (obj.type=="proc-result"){
+                let result = obj.result;
+                _pcallProms[obj.callId](result);
             }
         };
         """;
     }
 
+    // Init
+    void init(){
+        // Functions for frontend
+        this.funcs = {
+            "echo":(this.echo,syn), "sum":(this.sum,asyn)            
+        };
+        this.staticFuncs = {
+            "staticSum":(_thisclass.staticSum,asyn)
+        };
+    }
+
     // Start the app
     Future<void> start() async{
-        // Functions for frontend
-        var funcs = {
-            "echo":(this.echo,syn), "sum":(this.sum,asyn)
-        };
+        var funcs = this.funcs;
+        var staticFuncs = this.staticFuncs;
 
         // Load frontend
+        // todo: Hot reload frontend
         var html = await Fs.readFile("./frontend/bundle.min.html");   
 
         // Port for frontend to ws to
@@ -98,9 +138,36 @@ class Appbase {
                             var funcName = obj["func"];
                             var params = obj["params"];
                             var callId = obj["callId"];
+
+                            if (await funcs[funcName]!.$2 == syn){
+                                ws.add(toJson({
+                                    "type":"func-result", "callId":callId, "result":{
+                                        "error":"backend-method-is-not-async"
+                                    }
+                                }));
+                            }
                             var result = await funcs[funcName]!.$1(params);
                             ws.add(toJson({
-                                "callId":callId, "result":result
+                                "type":"func-result", "callId":callId, "result":result
+                            }));
+                        }else if (obj["proc"] != null){
+                            var funcName = obj["proc"];
+                            var params = obj["params"];
+                            var callId = obj["callId"];
+
+                            if (await staticFuncs[funcName]!.$2 == syn){
+                                ws.add(toJson({
+                                    "type":"proc-result", "callId":callId, "result":{
+                                        "error":"backend-method-is-not-async"
+                                    }
+                                }));
+                            }
+
+                            // todo: Run in Isolate.run or Isolate.spawn
+                            // not just simply await a func call
+                            var result = await staticFuncs[funcName]!.$1(params);
+                            ws.add(toJson({
+                                "type":"proc-result", "callId":callId, "result":result
                             }));
                         }
                     });
@@ -116,7 +183,7 @@ class Appbase {
             html += "<script>${makeJsCode(backend.port)}</script>";
         }        
 
-        // // Backend thread
+        // // Backend thread (use default main thread, not this):
         // var receiver = ReceivePort(); 
         // receiver.listen((map){
         //     // todo
@@ -161,20 +228,23 @@ class Appbase {
             }
         });
 
+        // Spawn in the webview in thread
         Map<String,dynamic> data = {
             "outer": receiver.sendPort
         };
         Isolate.spawn((data){
             print("Spawning WebView thread...");
             var outer = data["outer"];
-            WebView_.createAndRun(outer!,funcs,html); // Don't await here, no use.       
+            WebView_.createAndRun(outer!,funcs!,html); // Don't await here, no use.       
 
             if (!platformIsWeb())
                 processExit();
         },data);
     }
 }
+typedef _thisclass = Appbase;
 
+// DEP: Let app.dart use this main func
 // var ____CORE____;
 
 // // Main

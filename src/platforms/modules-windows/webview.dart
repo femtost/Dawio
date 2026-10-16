@@ -72,8 +72,10 @@ class WebViewConfig {
 // WebView for Windows
 // See: https://github.com/webview/webview/blob/master/core/include/webview/api.h
 // Communication: 
-//   - JS -> Dart: webview_bind + webview_dispatch(webview_return)
+//   - JS -> Dart: webview_bind + webview_dispatch (with webview_return)
+//   - JS -> Dart: websocket
 //   - Dart -> JS: webview_eval + wait for webview_bind call.
+//   - Dart -> JS: websocket
 class WebView_ {
     static Map funcs = {};
     static late Pointer<Void> webview;
@@ -83,6 +85,7 @@ class WebView_ {
     static SendPort? outer;
 
     // Send to js
+    // NOTE: USE WEBSOCKET TO SEND TO JS INSTEAD!
     // WARN: THIS METHOD IS CALLED FROM MAIN THREAD, NOT FROM INSIDE THE
     // ISOLATE OF THE WEBVIEW.
     static void sendToJs(int webviewAddress, String respondTo, value){
@@ -220,11 +223,16 @@ class WebView_ {
         // Can't pass Future to another isolate coz it's on the event loop where it's created.  
         // Thus isolate is no use, send message to main thread instead:
         if (_thisclass.funcs[funcName].$2 == asyn) {
-            print("Func is async");            
-            _thisclass.outer!.send({
-                "func":funcName, "params":params, "respondTo":randStr()
-            });
+            print("Func is async");    
+            dispatchResult({"error":"use-acall-for-async-not-call"});
+
+            // This old method wont work coz sendToJs method doesnt'
+            // _thisclass.outer!.send({
+            //     "func":funcName, "params":params, "respondTo":randStr()
+            // });            
+
             // To use sendToJs but not working.
+            // This '.then' assign the callback but never run coz webview consumed thread.
             // res.then((val){ 
             //     print("Inside then");
             //     dispatchResult(val);
@@ -237,83 +245,12 @@ class WebView_ {
 
     // Send back result to JS after long running isolate
     static void dispatchJsProcResult(Pointer<Void> w, Pointer<Void> id){
-        // onJsProc malloc'ed the id, free at end of this method
-        final Pointer<Utf8> idHeapPtr = id.cast<Utf8>();
-        String idStr = idHeapPtr.toDartString();
-
-        // todo: Load dll once
-        final dylib = DynamicLibrary.open('webview.dll');
-        final WebViewReturnDart webviewReturn = 
-            dylib.lookupFunction<WebViewReturnC, WebViewReturnDart>('webview_return');
-
-        // Return result to the call from JS
-        print("Proc returning...");        
-        final result = toJson(_thisclass.jsProcResults[idStr]);
-        _thisclass.jsProcResults.remove(idStr); // Created in onJsProc
-        final resultPtr = result!.toNativeUtf8();
-
-        final targetWebview = (w != nullptr) ? w : _thisclass.webview;
-        webviewReturn(targetWebview, idHeapPtr.cast<Char>(), 0, resultPtr.cast<Char>());
-        print("Proc returned");
-
-        calloc.free(idHeapPtr); // Created in onJsProc, free here.
-        calloc.free(resultPtr);
-        dylib.close();
+        // DEP: now using pcall thru websocket
     }
 
     // Receive calls from JS, long processing and prepare to send back result
     static void onJsProc(Pointer<Char> id,Pointer<Char> req,Pointer<Void> arg) {
-        // Clone id coz webview.dll will free it
-        String idStr = id.cast<Utf8>().toDartString(); // Can't use id from this line
-        print('id: $idStr');
-        String json = req.cast<Utf8>().toDartString();
-        print('req: $json');
-        var arr = jsonDecode(json); // Always 2 items, required.
-        var funcName = arr[0];
-        var params = arr[1];
-
-        // Prepare data for isolate        
-        var receiver = ReceivePort();
-        receiver.listen((result){
-            _thisclass.jsProcResults[idStr] = result; // Will remove in dispatchJsProcResult
-
-            final webviewInstance = Pointer<Void>.fromAddress(config.webviewAddress);
-            final callback = Pointer<NativeFunction<WebViewDispatchCallbackC>>
-                .fromAddress(config.jsProcReturnFuncAddr);
-            final dylib = DynamicLibrary.open('webview.dll');
-            final WebViewDispatchDart webviewDispatch = 
-                dylib.lookupFunction<WebViewDispatchC, WebViewDispatchDart>('webview_dispatch');
-            
-            // Allocate id on native heap so it outlives this callback frame!
-            // This idHeapPtr will be freed in dispatchJsProcResult
-            final Pointer<Utf8> idHeapPtr = idStr.toNativeUtf8(); // malloc
-            webviewDispatch(
-                webviewInstance, callback,
-                // Use cloned string (old bug code: id.cast, see: docs/issues)
-                idHeapPtr.cast<Void>()
-            );
-            dylib.close();
-        });
-        Map<String,dynamic> data = {
-            "idStr":idStr, "funcName":funcName, "params":params,
-            "sendMsg": receiver.sendPort
-        };
-
-        // In new thread
-        Isolate.spawn((data) async{
-            String idStr = data["idStr"];
-            String funcName = data["funcName"];
-            var params = data["params"];
-            print("$idStr $funcName $params");
-            print(_thisclass);
-            print(_thisclass.funcs);
-
-            var result = {"foo":"bar"}; // await _thisclass.funcs[funcName](params);
-            print(data["sendMsg"]);
-            data["sendMsg"].send(result); // todo: stuck here, doesnt go to receiver.
-            // the same issue as onJsCall (no event loop and ports dont work)
-            // If webview is on main thread, it blocks Dart async loop.
-        },data);
+        // DEP: now using pcall thru websocket
     }
 
     // Console input
@@ -407,10 +344,13 @@ class WebView_ {
         calloc.free(name);
 
         // JS call: Asynchronous calculation 
+        // DEP: Now using pcall thru' websocket
+        /*
         final onJsProcessingFunc = Pointer.fromFunction<WebViewBindCallbackC>(_thisclass.onJsProc);
         final name2 = 'proc'.toNativeUtf8();
         webviewBind(webview,name2.cast<Char>(),onJsProcessingFunc,nullptr);
         calloc.free(name2);
+        */
 
         // Config for webview
         final Pointer<NativeFunction<WebViewDispatchCallbackC>> navigateFunc = 
